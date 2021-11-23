@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<script src="//cdn.bootcss.com/angular.js/1.5.6/angular.min.js"></script>
+<script type="text/javascript">
+	/*<![CDATA[*/
+	var app = angular.module('app', []);
+	app.controller('MainController', function($rootScope, $scope, $http) {
+
+		$scope.data = {};
+		$scope.rows = [];
+		
+		//新增(更改)
+		$scope.newdata = function() {
+			
+			$http({
+				url : '/newdata',
+				method : 'POST',
+				data : $scope.data
+			}).success(function(r) {
+				//保存成功後更新資訊
+				$scope.get(r.id);
+			});
+		}
+	
+
+		//編輯(完成)
+		$scope.edit = function(id) {
+			$scope.data = {
+					id : id.id,
+					name : id.name,
+					message : id.message,
+					date : id.create_date,
+				};
+		}
+
+		//移除(完成)
+		$scope.remove = function(id) {
+			for ( var i in $scope.rows) {
+				var row = $scope.rows[i];
+				if (id == row.id) {
+					$scope.rows.splice(i, 1);
+					return;
+				}
+			}
+		}
+		
+		//保存(完成)
+		$scope.save = function() {
+			$http({
+				url : '/save',
+				method : 'POST',
+				data : $scope.data
+			}).success(function(r) {
+				//保存成功後更新資訊
+				$scope.get(r.id);
+			});
+		}
+
+		//刪除(完成)
+		$scope.del = function(id) {
+			$http({
+				url : '/delete?id=' + id,
+				method : 'POST',
+			}).success(function(r) {
+				//刪除移除數據
+				$scope.remove(r.id);
+			});
+		}
+
+		//收取數據(完成)
+		$scope.get = function(id) {
+			$http({
+				url : '/get?id=' + id,
+				method : 'POST',
+			}).success(function(data) {
+				for ( var i in $scope.rows) {
+					var row = $scope.rows[i];
+					if (data.id == row.id) {
+						row.id = data.id;
+						row.name = data.name;
+						row.message = data.message;
+						row.data = data.date;
+						return;
+					}
+				}
+				$scope.rows.push(data);
+			});
+		}
+
+		//初始化載入資料(完成)
+		$http({
+			url : '/findAll',
+			method : 'POST'
+		}).success(function(rows) {
+			for ( var i in rows) {
+				var row = rows[i];
+				$scope.rows.push(row);
+			}
+		});
+	});
+	/*]]>*/
+</script>
+</head>
+<body ng-app="app" ng-controller="MainController">
+	<h1>留言板Web (測試)</h1>
+
+	<br />
+	<br />
+	<h3>編輯訊息：</h3>
+	<input id="id" type="hidden" ng-model="data.id" />
+	<table cellspacing="2" style="background-color: #a0c6e5">
+		<tr>
+			<td>ID：</td>
+			<td id="id" ng-model="data.id"> {{ data.id }}</td>
+			<td>名稱：</td>
+			<td><input id="name" ng-model="data.name"/></td>
+			<td>留言：</td>
+			<td><input id="message" ng-model="data.message"/></td>
+			<td>日期：</td>
+			<td id="date" ng-model="data.date"> {{ data.date }}</td>
+		
+		
+		</tr>
+	</table>
+	<input type="button" value="新增" ng-click="newdata()" />
+	<input type="button" value="(修改資料)保存" ng-click="save()" />
+	<br />
+	<h3>留言板列表：</h3>
+	<table cellspacing="1" style="background-color: #a0c6e5">
+		<tr
+			style="text-align: center; COLOR: #0076C8; BACKGROUND-COLOR: #F4FAFF; font-weight: bold">
+		
+			<td>ID</td>
+			<td>名稱</td>
+			<td>留言</td>
+			<td>留言時間</td>
+			<td>編輯</td>
+		</tr>
+		<tr ng-repeat="row in rows" bgcolor='#F4FAFF'>
+			
+			<td>{{row.id}}</td>
+			<td>{{row.name}}</td>
+			<td>{{row.message}}</td>
+			<td>{{row.create_date}}</td>
+			
+			<td><input ng-click="edit(row)" value="编辑" type="button" /><input
+				ng-click="del(row.id)" value="删除" type="button" /></td>
+		</tr>
+	</table>
+
+	<br />
+</body>
+</html>
